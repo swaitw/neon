@@ -5,35 +5,49 @@ on:
     # Prevent duplicate runs of this workflow on our own internal PRs.
     branches:
       - main
+      - next/*
   pull_request:
     branches:
       - main
+      - next/*
+
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "true"
 
 jobs:
   lint:
-
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [20.x]
         rust-toolchain: [nightly]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Rust ${{ matrix.rust-toolchain }}
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: ${{ matrix.rust-toolchain }}
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
-    - name: install build-essential
-      run: sudo apt-get install -y build-essential
-    - name: Formatting
-      run: cargo fmt --all -- --check
-    - name: Clippy (N-API)
-      run: cargo clippy-napi
-    - name: Clippy (Legacy)
-      run: cargo clippy-legacy
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Use Rust ${{ matrix.rust-toolchain }}
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust-toolchain }}
+          components: clippy,rustfmt
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - name: Cache Electron
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/electron
+          key: ${{ runner.os }}-electron-${{ hashFiles('./package-lock.json') }}
+      - name: npm install
+        run: npm ci --prefer-offline --no-audit --no-fund
+      - name: Prettier Formatting
+        run: npm run prettier:check
+      - name: Rust Formatting
+        run: cargo fmt --all -- --check
+      - name: Rust Clippy
+        run: cargo neon-clippy

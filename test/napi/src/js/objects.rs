@@ -1,7 +1,9 @@
-use neon::prelude::*;
+use std::borrow::Cow;
+
+use neon::{prelude::*, types::buffer::TypedArray};
 
 pub fn return_js_global_object(mut cx: FunctionContext) -> JsResult<JsObject> {
-    Ok(cx.global())
+    Ok(cx.global_object())
 }
 
 pub fn return_js_object(mut cx: FunctionContext) -> JsResult<JsObject> {
@@ -31,143 +33,92 @@ pub fn return_js_object_with_string(mut cx: FunctionContext) -> JsResult<JsObjec
     Ok(js_object)
 }
 
-pub fn return_array_buffer(mut cx: FunctionContext) -> JsResult<JsArrayBuffer> {
-    let b: Handle<JsArrayBuffer> = cx.array_buffer(16)?;
-    Ok(b)
-}
-
-pub fn read_array_buffer_with_lock(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let b: Handle<JsArrayBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = {
-        let guard = cx.lock();
-        let data = b.borrow(&guard);
-        let slice = data.as_slice::<u32>();
-        slice[i]
-    };
-    Ok(cx.number(x))
-}
-
-pub fn read_array_buffer_with_borrow(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let b: Handle<JsArrayBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = cx.borrow(&b, |data| data.as_slice::<u32>()[i]);
-    Ok(cx.number(x))
-}
-
-pub fn sum_array_buffer_with_borrow(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let b: Handle<JsArrayBuffer> = cx.argument(0)?;
-    let x: u8 = cx.borrow(&b, |data| data.as_slice::<u8>().iter().sum());
-    Ok(cx.number(x))
-}
-
-pub fn write_array_buffer_with_lock(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let mut b: Handle<JsArrayBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = cx.argument::<JsNumber>(2)?.value(&mut cx) as u32;
-    {
-        let guard = cx.lock();
-        let data = b.borrow_mut(&guard);
-        let slice = data.as_mut_slice::<u32>();
-        slice[i] = x;
+pub fn freeze_js_object(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    match obj.freeze(&mut cx) {
+        Ok(_) => Ok(cx.undefined()),
+        Err(e) => cx.throw_error(e.to_string()),
     }
-    Ok(cx.undefined())
 }
 
-pub fn write_array_buffer_with_borrow_mut(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let mut b: Handle<JsArrayBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = cx.argument::<JsNumber>(2)?.value(&mut cx) as u32;
-    cx.borrow_mut(&mut b, |data| {
-        data.as_mut_slice::<u32>()[i] = x;
-    });
-    Ok(cx.undefined())
-}
-
-pub fn increment_array_buffer_with_borrow_mut(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let mut b: Handle<JsArrayBuffer> = cx.argument(0)?;
-    cx.borrow_mut(&mut b, |data| {
-        data.as_mut_slice::<i8>().iter_mut().for_each(|x| *x += 1);
-    });
-    Ok(cx.undefined())
-}
-
-pub fn return_uninitialized_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let b: Handle<JsBuffer> = unsafe { JsBuffer::uninitialized(&mut cx, 16)? };
-    Ok(b)
-}
-
-pub fn return_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let b: Handle<JsBuffer> = cx.buffer(16)?;
-    Ok(b)
-}
-
-pub fn return_external_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let data = cx.argument::<JsString>(0)?.value(&mut cx);
-    let buf = JsBuffer::external(&mut cx, data.into_bytes());
-
-    Ok(buf)
-}
-
-pub fn return_external_array_buffer(mut cx: FunctionContext) -> JsResult<JsArrayBuffer> {
-    let data = cx.argument::<JsString>(0)?.value(&mut cx);
-    let buf = JsArrayBuffer::external(&mut cx, data.into_bytes());
-
-    Ok(buf)
-}
-
-pub fn read_buffer_with_lock(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let b: Handle<JsBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = {
-        let guard = cx.lock();
-        let data = b.borrow(&guard);
-        let slice = data.as_slice::<u32>();
-        slice[i]
-    };
-    Ok(cx.number(x))
-}
-
-pub fn read_buffer_with_borrow(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let b: Handle<JsBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = cx.borrow(&b, |data| data.as_slice::<u32>()[i]);
-    Ok(cx.number(x))
-}
-
-pub fn sum_buffer_with_borrow(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let b: Handle<JsBuffer> = cx.argument(0)?;
-    let x: u8 = cx.borrow(&b, |data| data.as_slice::<u8>().iter().sum());
-    Ok(cx.number(x))
-}
-
-pub fn write_buffer_with_lock(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let mut b: Handle<JsBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = cx.argument::<JsNumber>(2)?.value(&mut cx) as u32;
-    {
-        let guard = cx.lock();
-        let data = b.borrow_mut(&guard);
-        let slice = data.as_mut_slice::<u32>();
-        slice[i] = x;
+pub fn seal_js_object(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    match obj.seal(&mut cx) {
+        Ok(_) => Ok(cx.undefined()),
+        Err(e) => cx.throw_error(e.to_string()),
     }
+}
+
+// Accepts either a `JsString` or `JsBuffer` and returns the contents as
+// as bytes; avoids copying.
+fn get_bytes<'cx, 'a, C>(cx: &'a mut C, v: Handle<JsValue>) -> NeonResult<Cow<'a, [u8]>>
+where
+    C: Context<'cx>,
+{
+    if let Ok(v) = v.downcast::<JsString, _>(cx) {
+        return Ok(Cow::Owned(v.value(cx).into_bytes()));
+    }
+
+    if let Ok(v) = v.downcast::<JsBuffer, _>(cx) {
+        return Ok(Cow::Borrowed(v.as_slice(cx)));
+    }
+
+    cx.throw_type_error("Value must be a string or Buffer")
+}
+
+pub fn byte_length(mut cx: FunctionContext) -> JsResult<JsNumber> {
+    let v = cx.argument::<JsValue>(0)?;
+    let bytes = get_bytes(&mut cx, v)?;
+
+    // `v` is dropped here, but `bytes` is still valid since the data is on the V8 heap
+
+    let len = bytes.len();
+
+    Ok(cx.number(len as f64))
+}
+
+pub fn call_nullary_method(mut cx: FunctionContext) -> JsResult<JsNumber> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    obj.call_method_with(&mut cx, "nullary")?.apply(&mut cx)
+}
+
+pub fn call_unary_method(mut cx: FunctionContext) -> JsResult<JsNumber> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    let x: Handle<JsNumber> = cx.argument::<JsNumber>(1)?;
+    obj.call_method_with(&mut cx, "unary")?
+        .arg(x)
+        .apply(&mut cx)
+}
+
+pub fn call_symbol_method(mut cx: FunctionContext) -> JsResult<JsString> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    let sym: Handle<JsValue> = cx.argument::<JsValue>(1)?;
+    obj.call_method_with(&mut cx, sym)?.apply(&mut cx)
+}
+
+pub fn get_property_with_prop(mut cx: FunctionContext) -> JsResult<JsNumber> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    let n: f64 = obj.prop(&mut cx, "number").get()?;
+    Ok(cx.number(n))
+}
+
+pub fn set_property_with_prop(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    obj.prop(&mut cx, "number").set(42)?;
     Ok(cx.undefined())
 }
 
-pub fn write_buffer_with_borrow_mut(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let mut b: Handle<JsBuffer> = cx.argument(0)?;
-    let i = cx.argument::<JsNumber>(1)?.value(&mut cx) as u32 as usize;
-    let x = cx.argument::<JsNumber>(2)?.value(&mut cx) as u32;
-    cx.borrow_mut(&mut b, |data| {
-        data.as_mut_slice::<u32>()[i] = x;
-    });
-    Ok(cx.undefined())
+pub fn call_methods_with_prop(mut cx: FunctionContext) -> JsResult<JsString> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    obj.prop(&mut cx, "setName")
+        .bind()?
+        .arg("Wonder Woman")?
+        .exec()?;
+    obj.prop(&mut cx, "toString").bind()?.call()
 }
 
-pub fn increment_buffer_with_borrow_mut(mut cx: FunctionContext) -> JsResult<JsUndefined> {
-    let mut b: Handle<JsBuffer> = cx.argument(0)?;
-    cx.borrow_mut(&mut b, |data| {
-        data.as_mut_slice::<i8>().iter_mut().for_each(|x| *x += 1);
-    });
+pub fn call_non_method_with_prop(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    let obj: Handle<JsObject> = cx.argument::<JsObject>(0)?;
+    obj.prop(&mut cx, "number").bind()?.exec()?;
     Ok(cx.undefined())
 }
