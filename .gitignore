@@ -1,15 +1,26 @@
+# Rust
 target
-Cargo.lock
+rls*.log
+
+# Created by `trybuild` ui tests
+wip
 **/*~
+
+# Node
 **/node_modules
-**/.DS_Store
+npm-debug.log
+
+# JS build
 **/build
+**/dist
+cli/lib
+test/cli/lib
+
+# Neon build
 **/index.node
 **/artifacts.json
-cli/lib
-create-neon/dist
-create-neon/create-neon-test-project
-create-neon/create-neon-manual-test-project
-test/cli/lib
-npm-debug.log
-rls*.log
+pkgs/create-neon/create-neon-test-project
+pkgs/create-neon/create-neon-manual-test-project
+
+# System
+**/.DS_Store

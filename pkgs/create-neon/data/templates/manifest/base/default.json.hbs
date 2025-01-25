@@ -1,0 +1,13 @@
+
+{
+  "name": "{{options.fullName}}",
+  "version": "{{options.version}}",
+  "main": "index.node",
+  "scripts": {},
+  "devDependencies": {
+    "@neon-rs/cli": "{{versions.neonCLI}}"{{#eq options.library.lang compare="ts"}},
+    "@tsconfig/node{{versions.tsconfigNode.major}}": "^{{versions.tsconfigNode.semver}}",
+    "@types/node": "^{{versions.typesNode}}",
+    "typescript": "^{{versions.typescript}}"{{/eq}}
+  }
+}

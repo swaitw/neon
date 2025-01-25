@@ -1,19 +1,16 @@
 [package]
 name = "neon-macros"
-version = "0.9.1"
+version = "1.0.0"
 authors = ["Dave Herman <david.herman@gmail.com>"]
 description = "Procedural macros supporting Neon"
 repository = "https://github.com/neon-bindings/neon"
 license = "MIT/Apache-2.0"
-edition = "2018"
+edition = "2021"
 
 [lib]
 proc-macro = true
 
-[features]
-napi = []
-
 [dependencies]
-quote = "1"
-syn = "1"
-syn-mid = "0.5"
+proc-macro2 = "1.0.79"
+quote = "1.0.33"
+syn = { version = "2.0.57", features = ["full"] }
