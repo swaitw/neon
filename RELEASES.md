@@ -1,3 +1,217 @@
+# `cargo-cp-artifact`
+
+`0.1.9` supports a [breaking change in `cargo`](https://github.com/rust-lang/cargo/issues/13867) that converts artifact names from `kebab-case` to `snake_case`.
+
+# Version 1.0.0
+
+## Commitment to Compatibility
+
+The release of Neon 1.0 marks our commitment to backwards-compatibility: starting with 1.0.0, Neon users can be confident that future **upgrades to Neon 1.x versions should never require code changes** (with the possible exception of safety bugfixes, which we expect to be rare). We also do not anticipate releasing new major versions often and do not have any plans to do so for now.
+
+## Breaking Changes
+
+* Remove the generic parameter from `JsFunction` (https://github.com/neon-bindings/neon/pull/989)
+* `JsArray::new` takes a `usize` instead of a `u32` (https://github.com/neon-bindings/neon/pull/988)
+* Made `Context::global` read a key and added `Context::global_object` (https://github.com/neon-bindings/neon/pull/987)
+* Deprecated feature flags were removed
+
+## Bug fixes
+
+* Fix `unhandledRejection` with `JsPromise::to_future` (https://github.com/neon-bindings/neon/pull/1008)
+* Typo in `cargo-cp-artifact` help (https://github.com/neon-bindings/neon/pull/998)
+* Typo in README (https://github.com/neon-bindings/neon/pull/1012)
+
+## Other
+
+https://github.com/neon-bindings/neon/pull/1010
+
+* Relaxed error behavior on missing Node-API symbols. Neon will panic on first use instead of aborting the process at module load time.
+* Bumped dependency versions
+* Changed to edition 2021
+* Updated support matrix to Node 18, 20, and 21
+
+# Version 1.0.0-alpha.4
+
+Patch to enable new features flags in docs.rs.
+
+# Version 1.0.0-alpha.3
+
+## Breaking Changes
+
+* Removed `Managed` trait
+
+## Improvements
+
+* Added `JsBigInt` (https://github.com/neon-bindings/neon/pull/963).
+* Added UTF-16 functions to `JsString` (https://github.com/neon-bindings/neon/pull/944).
+* Relaxed `Send` constraints (https://github.com/neon-bindings/neon/pull/979)
+* Lifecycle support for 32-bit (https://github.com/neon-bindings/neon/pull/977)
+* Added `sys` feature (https://github.com/neon-bindings/neon/pull/970)
+
+## Bug Fixes
+
+* Fix a scope leak in release builds (https://github.com/neon-bindings/neon/pull/952).
+
+## Docs
+
+* Examples added for many types ((https://github.com/neon-bindings/neon/pull/942)).
+
+### `cargo-cp-artifact`
+
+`0.1.8` fixes sending additional arguments on Windows (https://github.com/neon-bindings/neon/pull/972).
+
+# Version 1.0.0-alpha.2
+
+## Breaking Changes
+
+### `neon::object::This`
+
+https://github.com/neon-bindings/neon/pull/918
+
+Trait [`neon::object::This`](https://docs.rs/neon/latest/neon/object/trait.This.html) has been removed. `This` was primarily added for use with the `declare_types!` macro to generate classes. The macro was removed and `This` is no longer needed. Additionally, the `This` argument on `JsFunction` was found to be _invalid_ because it asserted at compile time a type for `this` that could change at runtime. (Note that this was _not_ unsound because the type would be checked by Node-API and result in a `panic`.)
+
+### `JsFunction::this`
+
+https://github.com/neon-bindings/neon/pull/918
+
+`JsFunction::this` was changed to perform a downcast and be _fallible_. This is in line with similar APIs (e.g., `Object::get`). Additionally, an infallible version, `JsValue::this_value` was added that does _not_ perform a downcast.
+
+### Added Feature flag for external buffers
+
+https://github.com/neon-bindings/neon/pull/937
+
+Electron began using [pointer compression](https://www.electronjs.org/blog/v8-memory-cage) on JavaScript values that is incompatible with external buffers. As a preventative measure, `JsArrayBuffer::external` and `JsBuffer::external` have been placed behind a feature flag that warns of Electron incompatibility.
+
+## Improvements
+
+* Lifetimes were relaxed on `execute_scoped` to allow valid code to compile. (https://github.com/neon-bindings/neon/pull/919)
+* Added a `from_slice` helper on `TypedArray` (https://github.com/neon-bindings/neon/pull/925)
+* `JsTypedArray` construction and type aliases (https://github.com/neon-bindings/neon/pull/909)
+
+## Bug Fixes
+
+* Fixed a panic on VM shutdown when using `Channel` (https://github.com/neon-bindings/neon/pull/934)
+* Type tags were added to `JsBox` to prevent undefined behavior when multiple native add-ons are used (https://github.com/neon-bindings/neon/pull/907)
+
+## Docs
+
+* Significantly improved documentation of `TypedArray` (https://github.com/neon-bindings/neon/pull/909)
+* Removed unused values in `Channel` docs (https://github.com/neon-bindings/neon/pull/925)
+
+### `cargo-cp-artifact`
+
+`0.1.7` includes a fix to unlink `.node` files before copying to address common code signing errors on macOS (https://github.com/neon-bindings/neon/pull/921).
+
+# Version 1.0.0-alpha.1
+
+Pre-release of a major milestone for Neon. 1.0.
+
+## Breaking Changes
+
+### Major
+
+* Removed the legacy backend; only Node-API is supported going forward (https://github.com/neon-bindings/neon/pull/881)
+* Removed `neon::result::JsResultExt` in favor of more general `neon::result::ResultExt` (https://github.com/neon-bindings/neon/pull/904)
+
+### Minor
+
+* Length APIs (`argument`, `argument_ops`, `len`) use `usize` instead of `i32` (https://github.com/neon-bindings/neon/pull/889)
+* Deprecate feature flags for accepted RFCs (https://github.com/neon-bindings/neon/pull/872)
+* `neon::meta::version` returns `semver@1` version instead of `0.9` (https://github.com/neon-bindings/neon/pull/912)
+
+## Features
+
+* Add `Object.freeze` and `Object.seal` (https://github.com/neon-bindings/neon/pull/891)
+* Futures RFC (https://github.com/neon-bindings/neon/pull/872) Implementation (https://github.com/neon-bindings/neon/pull/874)
+  - Await `JoinHandle` from sending an event on a `Channel`
+  - Adapt `JsPromise` to `JsFuture`
+* API for thread-local data (i.e., instance data) (https://github.com/neon-bindings/neon/pull/902)
+* Add Object::call_with() convenience method to call a method on an object (https://github.com/neon-bindings/neon/pull/879)
+
+## Bug Fixes
+
+* Relax the lifetime constraints on `TypedArray` borrows (https://github.com/neon-bindings/neon/pull/877)
+* Allowing missing symbols at load time to support [bun](https://bun.sh) (https://github.com/neon-bindings/neon/pull/914)
+* Prevent a panic when an async event is called after the JavaScript runtime has stopped (https://github.com/neon-bindings/neon/pull/913)
+* Fix a soundness hole in `JsArrayBuffer::external` and `JsBuffer::external` (https://github.com/neon-bindings/neon/pull/897)
+
+## Docs
+
+* Fixed mistake in `Object::get` docs (https://github.com/neon-bindings/neon/pull/903)
+* Fixed link in README to migration guide (https://github.com/neon-bindings/neon/pull/895)
+
+## Internal
+
+* Moved `cargo-cp-artirfact` into the monorepo (https://github.com/neon-bindings/neon/pull/905)
+* Decreased the size of the Neon build matrix (https://github.com/neon-bindings/neon/pull/893)
+* Removed scope abstraction from legacy backend (https://github.com/neon-bindings/neon/pull/888)
+* Improved the monorepo structure of neon (https://github.com/neon-bindings/neon/pull/884)
+
+# Version 0.10.1
+
+Fix a soundness hole in `JsArrayBuffer::external`
+and `JsBuffer::external` (https://github.com/neon-bindings/neon/pull/897).
+
+Thanks to [@Cassy343](https://github.com/Cassy343) for finding the [issue](https://github.com/neon-bindings/neon/issues/896)!
+
+In previous versions of Neon, it was possible to create a `JsArrayBuffer` or `JsBuffer` that references data without the `'static` lifetime.
+
+```rust
+pub fn soundness_hole(mut cx: FunctionContext) -> JsResult<JsArrayBuffer> {
+    let mut data = vec![0u8, 1, 2, 3];
+
+    // Creating an external from `&mut [u8]` instead of `Vec<u8>` since there is a blanket impl
+    // of `AsMut<T> for &mut T`
+    let buf = JsArrayBuffer::external(&mut cx, data.as_mut_slice());
+
+    // `buf` is still holding a reference to `data`!
+    drop(data);
+
+    Ok(buf)
+}
+```
+
+# Version 0.10
+
+See the [Neon 0.10 Migration Guide](docs/MIGRATION_GUIDE_0.10.md) for more details about new features and breaking changes.
+
+## Features
+
+* New [buffer borrowing API](https://github.com/neon-bindings/neon/pull/780)
+* Added [JoinHandle](https://github.com/neon-bindings/neon/pull/787) for `Channel::send`
+* [`JsPromise` and `TaskBuilder`](https://github.com/neon-bindings/neon/pull/789)
+* Handle [panics and exceptions](https://github.com/neon-bindings/neon/pull/808) in Channels and Tasks
+* [Function call / construct builders](https://github.com/neon-bindings/neon/pull/829)
+  and [simplify low level call](https://github.com/neon-bindings/neon/pull/825)
+* Create [functions from closures](https://github.com/neon-bindings/neon/pull/811)
+
+## Minor Improvements
+
+* [Performance improvements](https://github.com/neon-bindings/neon/pull/815)
+* [Rename N-API to Node-API](https://github.com/neon-bindings/neon/pull/753) in docs to match Node changes
+* Remove unused [cslice dependency](https://github.com/neon-bindings/neon/pull/794)
+* Switch to [`syn-mid`](https://github.com/neon-bindings/neon/pull/814) for faster compile times
+* Downcast in [`Object::get`](https://github.com/neon-bindings/neon/pull/839)
+* Added [migration guide](https://github.com/neon-bindings/neon/pull/859)
+* Added [`Object::get_opt` and `Object::get_value`](https://github.com/neon-bindings/neon/pull/867)
+
+## Fixes
+
+* [Safety] Make it harder to store and forge [Throw](https://github.com/neon-bindings/neon/pull/797)
+* [Soundness] [Make `JsValue` types `!Copy`](https://github.com/neon-bindings/neon/pull/832)
+* [Soundness] [Tag `Root`](https://github.com/neon-bindings/neon/pull/847) with instance id
+* `create-neon` no longer [leaves partial project on disk](https://github.com/neon-bindings/neon/pull/840)
+* Fix legacy backend on [Electron and Windows](https://github.com/neon-bindings/neon/pull/785)
+* [FreeBSD support](https://github.com/neon-bindings/neon/pull/856) on legacy backend
+
+## Internal Improvements
+
+* Replace Electron tests [with Playwright](https://github.com/neon-bindings/neon/pull/835)
+* Re-organize Neon into an [npm workspace](https://github.com/neon-bindings/neon/pull/852)
+* [Fix crates.io badge](https://github.com/neon-bindings/neon/pull/781)
+* [Doc test fixes](https://github.com/neon-bindings/neon/pull/800)
+* Fix [broken link](https://github.com/neon-bindings/neon/pull/804) in the README
+
 # Version 0.9.1
 
 * Expose the `Finalize` trait as `neon::types::Finalize` so that docs are visible
